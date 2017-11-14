@@ -12,6 +12,7 @@ state = 0
 waypoints = []
 cur_point = 0
 target_heading = 0
+rate = rospy.Rate(100)
 
 # Declare the angle of the layline - This needs to be properly defined and perhaps read from a topic
 layline = 30
@@ -39,17 +40,18 @@ def position_callback(position):
 	global state
 	global wind_heading
 	global new_wind
+	buoy_tolerance = 5
 
 	# If the boat isn't in the autonomous planning state, exit
 	if state.major is not BoatState.MAJ_AUTONOMOUS or state.minor is not BoatState.MIN_PLANNING:
 		return
 	
 	# If the boat is close enough to the waypoint...
-	while is_within_dist(position, waypoints[cur_point], 3):
+	while is_within_dist(position, waypoints[cur_point], buoy_tolerance):
 		cur_point += 1
 	
 		# If there are no waypoints left to navigate to, exit	
-		if len(waypoints) >= cur_point:
+		if cur_point >= len(waypoints):
 			state.minor = BoatState.MIN_COMPLETE			
 			boat_state_pub.publish(state)
 			rospy.loginfo(rospy.get_caller_id() + " No waypoints left. Boat State = 'Autonomous - Complete'")
@@ -68,9 +70,9 @@ def position_callback(position):
 			
 			# If the waypoint is to the right of the wind...
 			if best_heading > wind_heading:
-				target_heading = best_heading + layline
+				target_heading = wind_heading + layline
 			else:
-				target_heading = best_heading - layline
+				target_heading = wind_heading - layline
 				
 		# If there isn't new wind data, DON'T update the heading
 		else:
@@ -83,8 +85,8 @@ def position_callback(position):
 		heading_pub.publish(target_heading)
 		rospy.loginfo(rospy.get_caller_id() + " New target heading: %f", target_heading)
 
-	# Maybe we should put a sleep here??
-	
+	# Adjust the sleep to suit the node
+	rate.sleep()
 		
 
 # Determine if the dist between two points is within the specified tolerance
