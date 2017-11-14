@@ -2,7 +2,4 @@
  <node pkg="boat_nav" type="path_planning_node.py"
     name="path_planning" >
   </node>
-  <node pkg="boat_nav" type="rudder_autonomous_node.py"
-    name="rudder_autonomous" >
-  </node>
 </launch>
