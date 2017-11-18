@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import rospy
+import time
 from std_msgs.msg import Float32
 from boat_nav.msg import Point
 from boat_nav.msg import PointArray
@@ -12,7 +13,7 @@ state = 0
 waypoints = []
 cur_point = 0
 target_heading = 0
-rate = rospy.Rate(100)
+rate = 0
 
 # Declare the angle of the layline - This needs to be properly defined and perhaps read from a topic
 layline = 30
@@ -41,6 +42,8 @@ def position_callback(position):
 	global wind_heading
 	global new_wind
 	buoy_tolerance = 5
+
+	rate = rospy.Rate(100)
 
 	# If the boat isn't in the autonomous planning state, exit
 	if state.major is not BoatState.MAJ_AUTONOMOUS or state.minor is not BoatState.MIN_PLANNING:
@@ -104,8 +107,10 @@ def listener():
     rospy.Subscriber('gps', Point, position_callback)
     rospy.spin()
 
+
 if __name__ == '__main__':
     try:
         listener()
     except rospy.ROSInterruptException:
         pass
+
