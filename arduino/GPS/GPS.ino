@@ -34,6 +34,9 @@ void setup() {
   GPS.begin(9600);
   // Tell gps to send RMC (recommended minimum) and GGA (fix data) data
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+  //Enable WAAS
+  GPS.sendCommand("$PMTK313,1*2E");
+  GPS.sendCommand("$PMTK301,2*2E");
   // Set the update rate
   GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);   // 1 Hz update rate
   
@@ -48,7 +51,7 @@ int last_status = 0;
 
 void loop() {
   GPS.read();
-  
+
   // if a sentence is received, we can check the checksum, parse it...
   if (GPS.newNMEAreceived()) {
     if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
@@ -60,7 +63,11 @@ void loop() {
     GPS_timer = millis(); // reset the timer
     
     if (GPS.fix) {
-      gpsData.status = 0;
+      if (GPS.fixquality == 1){
+        gpsData.status = gpsData.STATUS_FIX;
+      }else if (GPS.fixquality == 2){
+        gpsData.status = gpsData.STATUS_WAAS_FIX;
+      }
       gpsData.satellites_used = GPS.satellites;
       gpsData.latitude = GPS.latitudeDegrees;
       gpsData.longitude = GPS.longitudeDegrees;
@@ -69,10 +76,10 @@ void loop() {
       gpsData.speed = GPS.speed;
       gpsData.hdop = GPS.HDOP; // horizontal diltuion of precision
     }else{
-      gpsData.status = -1;
+      gpsData.status = gpsData.STATUS_NO_FIX;
     }
 
-    //only publish is readings have changes
+    //only publish if readings have changes
    if ((last_lat != gpsData.latitude) ||
         (last_long != gpsData.longitude) ||
         (last_status != gpsData.status)){
@@ -82,8 +89,6 @@ void loop() {
       last_long = gpsData.longitude;
       last_status = gpsData.status;
     }
-    
-    gps.publish(&gpsData);
   }
 
   nh.spinOnce();
