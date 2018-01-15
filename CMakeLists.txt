@@ -138,9 +138,6 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/boat_nav_node.cpp)
 
-add_executable(test_send src/test_send.cpp)
-target_link_libraries(test_send ${catkin_LIBRARIES})
-
 add_executable(navsatfix_msg_adapter_node src/navsatfix_msg_adapter_node.cpp)
 target_link_libraries(navsatfix_msg_adapter_node ${catkin_LIBRARIES})
 
