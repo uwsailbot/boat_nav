@@ -9,9 +9,9 @@ from boat_nav.msg import BoatState
 # Declare global variables needed for the node
 new_wind = False
 wind_heading = 0
-state = 0
+state = BoatState()
 waypoints = []
-cur_point = 0
+cur_point = Point()
 target_heading = 0
 rate = 0
 
@@ -104,7 +104,7 @@ def listener():
     rospy.Subscriber('boat_state', BoatState, boat_state_callback)
     rospy.Subscriber('wind_heading', Float32, wind_callback)
     rospy.Subscriber('waypoints', PointArray, waypoints_callback)
-    rospy.Subscriber('gps', Point, position_callback)
+    rospy.Subscriber('lps', Point, position_callback)
     rospy.spin()
 
 

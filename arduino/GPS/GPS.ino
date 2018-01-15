@@ -14,7 +14,7 @@
 #include <SoftwareSerial.h>
 #include <ros.h>
 #include <boat_nav/GPS.h>
-
+#include <boat_nav/Point.h>
 
 //Pins the gps is attached to
 #define GPS_TX_PIN 3
@@ -28,6 +28,10 @@ Adafruit_GPS GPS(&mySerial);
 ros::NodeHandle_<ArduinoHardware, 1, 1, 0, 340> nh;
 boat_nav::GPS gpsData;
 ros::Publisher gps("gps_raw", &gpsData);
+
+bool publishedOrigin = false;
+boat_nav::Point originCoords;
+ros::Publisher originPub("origin_coords", &originCoords);
 
 
 void setup() {
@@ -43,7 +47,6 @@ void setup() {
   nh.initNode();
   nh.advertise(gps);
 }
-
 
 uint32_t GPS_timer = millis();
 float last_lat = 0, last_long = 0;
@@ -75,6 +78,16 @@ void loop() {
       gpsData.track = GPS.angle;
       gpsData.speed = GPS.speed;
       gpsData.hdop = GPS.HDOP; // horizontal diltuion of precision
+      
+      // If we haven't published an initial coordinate yet, publish one!
+      if(!publishedOrigin){
+      	originCoords.x = GPS.longitudeDegrees;
+      	originCoords.y = GPS.latitudeDegrees;
+      	originPub.publish(&originCoords);
+      	
+      	publishedOrigin = true;
+      }
+      
     }else{
       gpsData.status = gpsData.STATUS_NO_FIX;
     }

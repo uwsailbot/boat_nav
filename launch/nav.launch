@@ -6,4 +6,5 @@
  <node pkg="boat_nav" type="path_planning_node.py"
     name="path_planning" >
   </node>
+ <node pkg="boat_nav" type="gps_to_lps_node.py" name="gps_to_lps"/>
 </launch>
