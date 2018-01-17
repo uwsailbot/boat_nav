@@ -102,7 +102,7 @@ def is_within_dist(p1, p2, dist):
 def listener():
     rospy.init_node('path_planning')
     rospy.Subscriber('boat_state', BoatState, boat_state_callback)
-    rospy.Subscriber('wind_heading', Float32, wind_callback)
+    rospy.Subscriber('anemometer', Float32, wind_callback)
     rospy.Subscriber('waypoints', PointArray, waypoints_callback)
     rospy.Subscriber('lps', Point, position_callback)
     rospy.spin()
