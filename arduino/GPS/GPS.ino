@@ -25,7 +25,7 @@ Adafruit_GPS GPS(&mySerial);
 
 //TODO: Need to change this when using mega with mutltiple subscribers and publishers
 //<HardwareType, MAX_PUBLISHERS, MAX_SUBSCRIBERS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE>
-ros::NodeHandle_<ArduinoHardware, 1, 1, 0, 340> nh;
+ros::NodeHandle_<ArduinoHardware, 2, 1, 0, 340> nh;
 boat_nav::GPS gpsData;
 ros::Publisher gps("gps_raw", &gpsData);
 
@@ -46,6 +46,7 @@ void setup() {
   
   nh.initNode();
   nh.advertise(gps);
+  nh.advertise(originPub);
 }
 
 uint32_t GPS_timer = millis();
