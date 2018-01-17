@@ -19,7 +19,7 @@
 #define WindVanePin (A4)       // The pin the wind vane sensor is connected to
 
 ros::NodeHandle  nh;
-std_msgs::Int32 winddir;
+std_msgs::Float32 winddir;
 boat_nav::GPS gpsData;
 
 SoftwareSerial mySerial(GPS_TX_PIN, GPS_RX_PIN);
@@ -27,11 +27,16 @@ Adafruit_GPS GPS(&mySerial);
 Servo servo_rudder;
 Servo servo_winch;
 int VaneValue;       // raw analog value from wind vane
-int CalDirection;    // calibrated wind value
-int LastValue;
+float CalDirection;    // calibrated wind value
+float LastValue;
 uint32_t GPS_timer = millis();
 float last_lat = 0, last_long = 0;
 int last_status = 0;
+
+
+float mapf(float value, float fromLow, float fromHigh, float toLow, float toHigh){
+    return (value - fromLow) * (toHigh - toLow) / (fromHigh - fromLow) + toLow;
+}
 
 void servo_cb( const std_msgs::Float32& cmd_msg){
     //Write the received data directly to the rudder servo
@@ -45,7 +50,7 @@ void winch_cb( const std_msgs::Int32& pos_msg){
 }
 
 ros::Subscriber<std_msgs::Float32> sub_rudder("rudder", servo_cb);
-ros::Subscriber<std_msgs::Int32> sub_winch("winch",winch_cb);
+ros::Subscriber<std_msgs::Int32> sub_winch("winch", winch_cb);
 ros::Publisher anemometer("anemometer", &winddir);
 ros::Publisher gps("gps_raw", &gpsData);
 
@@ -79,12 +84,12 @@ void loop(){
      GPS.read();
 
      // Map 0-1023 ADC value to 0-360
-     CalDirection = map(VaneValue, 0, 1023, 0, 360);
+     CalDirection = mapf(VaneValue, 0.0, 1023.0, 0.0, 360.0);
    
-     if(CalDirection >= 360)
-         CalDirection = CalDirection - 360;
+     while(CalDirection >= 360.0)
+         CalDirection = CalDirection - 360.0;
      
-     if(CalDirection < 0)
+     while(CalDirection < 0)
          CalDirection = CalDirection + 360;
   
 
