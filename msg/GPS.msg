@@ -24,7 +24,7 @@ float64 altitude
 # Direction (degrees from north)
 float64 track
 
-# Ground speed (meters/second)
+# Ground speed (knots). **1 knot ~= 0.51444m/s**
 float64 speed
 
 ## Dilution of precision; Xdop<=0 means the value is unknown
