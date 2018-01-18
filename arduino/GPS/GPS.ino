@@ -25,14 +25,9 @@ Adafruit_GPS GPS(&mySerial);
 
 //TODO: Need to change this when using mega with mutltiple subscribers and publishers
 //<HardwareType, MAX_PUBLISHERS, MAX_SUBSCRIBERS, IN_BUFFER_SIZE, OUT_BUFFER_SIZE>
-ros::NodeHandle_<ArduinoHardware, 2, 1, 0, 340> nh;
+ros::NodeHandle_<ArduinoHardware, 1, 1, 0, 340> nh;
 boat_nav::GPS gpsData;
 ros::Publisher gps("gps_raw", &gpsData);
-
-bool publishedOrigin = false;
-boat_nav::Point originCoords;
-ros::Publisher originPub("origin_coords", &originCoords);
-
 
 void setup() {
   GPS.begin(9600);
@@ -46,7 +41,6 @@ void setup() {
   
   nh.initNode();
   nh.advertise(gps);
-  nh.advertise(originPub);
 }
 
 uint32_t GPS_timer = millis();
@@ -79,15 +73,6 @@ void loop() {
       gpsData.track = GPS.angle;
       gpsData.speed = GPS.speed;
       gpsData.hdop = GPS.HDOP; // horizontal diltuion of precision
-      
-      // If we haven't published an initial coordinate yet, publish one!
-      if(!publishedOrigin){
-      	originCoords.x = GPS.longitudeDegrees;
-      	originCoords.y = GPS.latitudeDegrees;
-      	originPub.publish(&originCoords);
-      	
-      	publishedOrigin = true;
-      }
       
     }else{
       gpsData.status = gpsData.STATUS_NO_FIX;
