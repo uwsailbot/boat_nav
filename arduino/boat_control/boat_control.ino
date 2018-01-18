@@ -13,12 +13,14 @@
 #include <boat_nav/GPS.h>
 #include <math.h>
 
-//Pins the gps is attached to
+// Pins the gps is attached to
 #define GPS_TX_PIN 3
 #define GPS_RX_PIN 2
-#define WindVanePin (A4)       // The pin the wind vane sensor is connected to
 
-ros::NodeHandle  nh;
+// The pin the wind vane sensor is connected to
+#define WIND_VANE_PIN (A4)       
+
+ros::NodeHandle nh;
 std_msgs::Float32 winddir;
 boat_nav::GPS gpsData;
 
@@ -26,9 +28,8 @@ SoftwareSerial mySerial(GPS_TX_PIN, GPS_RX_PIN);
 Adafruit_GPS GPS(&mySerial);
 Servo servo_rudder;
 Servo servo_winch;
-int VaneValue;       // raw analog value from wind vane
-float CalDirection;    // calibrated wind value
-float LastValue;
+float calWindDirection;
+float lastWindDirection = 0;
 uint32_t GPS_timer = millis();
 float last_lat = 0, last_long = 0;
 int last_status = 0;
@@ -38,7 +39,7 @@ float mapf(float value, float fromLow, float fromHigh, float toLow, float toHigh
     return (value - fromLow) * (toHigh - toLow) / (fromHigh - fromLow) + toLow;
 }
 
-void servo_cb( const std_msgs::Float32& cmd_msg){
+void rudder_cb( const std_msgs::Float32& cmd_msg){
     //Write the received data directly to the rudder servo
     servo_rudder.write(cmd_msg.data);  
 }
@@ -49,7 +50,7 @@ void winch_cb( const std_msgs::Int32& pos_msg){
     servo_winch.writeMicroseconds(position_msg);
 }
 
-ros::Subscriber<std_msgs::Float32> sub_rudder("rudder", servo_cb);
+ros::Subscriber<std_msgs::Float32> sub_rudder("rudder", rudder_cb);
 ros::Subscriber<std_msgs::Int32> sub_winch("winch", winch_cb);
 ros::Publisher anemometer("anemometer", &winddir);
 ros::Publisher gps("gps_raw", &gpsData);
@@ -64,7 +65,6 @@ void setup(){
   
     servo_rudder.attach(3); // attach rudder to pin 3
     servo_winch.attach(4); // attach winch to pin 4
-    LastValue = 0;
 
     GPS.begin(9600);
     // Tell gps to send RMC (recommended minimum) and GGA (fix data) data
@@ -75,31 +75,27 @@ void setup(){
     // Set the update rate
     GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);   // 1 Hz update rate
   
-
-    pinMode(WindVanePin, INPUT);
+    pinMode(WIND_VANE_PIN, INPUT);
 }
 
 void loop(){
-     VaneValue = analogRead(WindVanePin);
-     GPS.read();
+    GPS.read();
 
-     // Map 0-1023 ADC value to 0-360
-     CalDirection = mapf(VaneValue, 0.0, 1023.0, 0.0, 360.0);
-   
-     while(CalDirection >= 360.0)
-         CalDirection = CalDirection - 360.0;
-     
-     while(CalDirection < 0)
-         CalDirection = CalDirection + 360;
+    // Map 0-1023 ADC value to 0-360
+    calWindDirection = mapf(analogRead(WIND_VANE_PIN), 0.0, 1023.0, 0.0, 360.0);
   
-
-      // Only update the display if change greater than 5 degrees. 
-    if(abs(CalDirection - LastValue) > 5)
+    // Ensure the wind direction is between 0 and 360
+    while(calWindDirection >= 360.0)
+        calWindDirection = calWindDirection - 360.0;
+    while(calWindDirection < 0)
+        calWindDirection = calWindDirection + 360;
+ 
+    // Only update the topic if change greater than 5 degrees. 
+    if(abs(calWindDirection - lastWindDirection) > 5)
     { 
-         LastValue = CalDirection;
-         winddir.data = CalDirection;
-         anemometer.publish(&winddir);
-       
+         lastWindDirection = calWindDirection;
+         winddir.data = calWindDirection;
+         anemometer.publish(&winddir);       
     }
 
     // if a sentence is received, we can check the checksum, parse it...
