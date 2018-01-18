@@ -22,7 +22,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "navsatfix_msg_adapter_node");
   ros::NodeHandle nh;
   ros::Subscriber sub = nh.subscribe("gps_raw",1,subscriber_callback);
-  pub = nh.advertise<sensor_msgs::NavSatFix>("gps/TODO_gps_raw",1);
+  pub = nh.advertise<sensor_msgs::NavSatFix>("odometry_navsatfix",1);
   ros::spin();
   return 0;
 }
